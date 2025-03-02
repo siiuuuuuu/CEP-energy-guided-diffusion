@@ -184,7 +184,7 @@ def model_wrapper(
     guidance_type="uncond",
     condition=None,
     unconditional_condition=None,
-    guidance_scale=1.,
+    guidance_scale=1.,#s为1，在自己定义的模型中设置步长
     classifier_fn=None,
     classifier_kwargs={},
 ):

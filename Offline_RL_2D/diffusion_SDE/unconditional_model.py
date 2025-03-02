@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from diffusion_SDE import dpm_solver_pytorch
 from diffusion_SDE import schedule
 from diffusion_SDE.model import GaussianFourierProjection, Dense, SiLU, mlp
-
+import math
 class GuidanceQt(nn.Module):
     def __init__(self, action_dim, state_dim):
         super().__init__()
@@ -99,8 +99,15 @@ class Bandit_ScoreBase(nn.Module):
         self.args = args
 
     def forward_dmp_wrapper_fn(self, x, t):
+        n= x.shape[0]
+        eps = 1e-20
         score = self(x, t)
-        result = - (score + self.q[0].calculate_guidance(x, t, None)) * self.marginal_prob_std(t)[1][..., None]
+        grad1 =self.q[0].calculate_guidance(x, t, None)
+        norm_grad=torch.linalg.norm(grad1, dim=-1)
+        r = math.sqrt(n)
+        grad2 =  grad1/ (norm_grad + eps)
+        grad2 = grad2 * r
+        result = - (score + grad2) * self.marginal_prob_std(t)[1][..., None]
         return result
     
     def dpm_wrapper_sample(self, dim, batch_size, **kwargs):
